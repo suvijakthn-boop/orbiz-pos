@@ -14,6 +14,7 @@ export type BoRoute =
   | 'transactions'
   | 'slips'
   | 'reports'
+  | 'monthly'
   | 'staff'
   | 'log'
   | 'settings';
@@ -21,7 +22,7 @@ export type BoRoute =
 export type Route = { area: 'staff'; page: StaffRoute } | { area: 'bo'; page: BoRoute; param?: string };
 
 const STAFF_PAGES: StaffRoute[] = ['pos', 'history', 'count'];
-const BO_PAGES: BoRoute[] = ['overview', 'products', 'inventory', 'counts', 'transactions', 'slips', 'reports', 'staff', 'log', 'settings'];
+const BO_PAGES: BoRoute[] = ['overview', 'products', 'inventory', 'counts', 'transactions', 'slips', 'reports', 'monthly', 'staff', 'log', 'settings'];
 
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);

@@ -8,6 +8,7 @@ import {
   ReceiptText,
   Images,
   BarChart3,
+  CalendarRange,
   Users,
   History,
   Settings as SettingsIcon,
@@ -26,6 +27,7 @@ import { CountsPage } from './Counts';
 import { TransactionsPage } from './Transactions';
 import { SlipsPage } from './Slips';
 import { ReportsPage } from './Reports';
+import { MonthlyPage } from './Monthly';
 import { StaffPage } from './StaffPage';
 import { ActivityLogPage } from './ActivityLog';
 import { SettingsPage } from './Settings';
@@ -38,6 +40,7 @@ const NAV: { id: BoRoute; label: string; icon: ReactNode }[] = [
   { id: 'transactions', label: 'รายการขาย', icon: <ReceiptText size={20} /> },
   { id: 'slips', label: 'สลิปโอนเงิน', icon: <Images size={20} /> },
   { id: 'reports', label: 'รายงาน', icon: <BarChart3 size={20} /> },
+  { id: 'monthly', label: 'สรุปรายเดือน', icon: <CalendarRange size={20} /> },
   { id: 'staff', label: 'พนักงาน', icon: <Users size={20} /> },
   { id: 'log', label: 'ประวัติการแก้ไข', icon: <History size={20} /> },
   { id: 'settings', label: 'ตั้งค่า', icon: <SettingsIcon size={20} /> },
@@ -124,6 +127,7 @@ export function BackOffice({ page, param, go, onExit, onLock }: { page: BoRoute;
         {page === 'transactions' && <TransactionsPage initial={param} />}
         {page === 'slips' && <SlipsPage />}
         {page === 'reports' && <ReportsPage />}
+        {page === 'monthly' && <MonthlyPage />}
         {page === 'staff' && <StaffPage />}
         {page === 'log' && <ActivityLogPage />}
         {page === 'settings' && <SettingsPage />}

@@ -29,7 +29,7 @@ test('Back Office asks for the PIN and locks when leaving or switching apps', as
 test('every Back Office page renders without sideways scrolling', async ({ page }) => {
   await setup(page);
   await unlock(page);
-  for (const label of ['ภาพรวม', 'สินค้า', 'สต็อก', 'ตรวจนับ', 'รายการขาย', 'สลิปโอนเงิน', 'รายงาน', 'พนักงาน', 'ประวัติการแก้ไข', 'ตั้งค่า']) {
+  for (const label of ['ภาพรวม', 'สินค้า', 'สต็อก', 'ตรวจนับ', 'รายการขาย', 'สลิปโอนเงิน', 'รายงาน', 'สรุปรายเดือน', 'พนักงาน', 'ประวัติการแก้ไข', 'ตั้งค่า']) {
     await boNav(page, label);
     await expect(page.locator('.page-head h1').first()).toBeVisible();
     await expectNoHorizontalOverflow(page);
