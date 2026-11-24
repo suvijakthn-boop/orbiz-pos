@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Camera, ChevronDown, ChevronUp, FolderCog, ImagePlus, Package, Pencil, Plus, Trash2, Check } from 'lucide-react';
+import { Camera, ChevronDown, ChevronUp, FolderCog, ImagePlus, Package, Pencil, Plus, Trash2, Check, FileUp, Download } from 'lucide-react';
 import { db, type Product } from '../../lib/db';
 import { baht, bahtInput, parseBaht, pct } from '../../lib/format';
 import { addCategory, createProduct, deleteCategory, moveCategory, renameCategory, updateProduct, validateProduct, type ProductDraft } from '../../lib/inventory';
 import { compressImage, storeImage } from '../../lib/images';
-import { useAction } from '../../state/app';
+import { useAction, useToast } from '../../state/app';
+import { IMPORT_TEMPLATE_HEADER, importProducts, previewImport, type ImportRow } from '../../lib/importer';
+import { saveFile, toCsv } from '../../lib/files';
 import { Empty, SearchField, Seg, Sheet, Thumb, Toggle, useBusy, useFilePicker } from '../../components/ui';
 import { PageHead } from './BackOffice';
 
@@ -19,6 +21,7 @@ export function ProductsPage() {
   const [status, setStatus] = useState<Status>('active');
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [cats, setCats] = useState(false);
+  const [importing, setImporting] = useState(false);
   const catName = useMemo(() => new Map((categories ?? []).map((c) => [c.id, c.name])), [categories]);
 
   const list = useMemo(() => {
@@ -36,6 +39,9 @@ export function ProductsPage() {
       <PageHead title="สินค้า" sub={`${(products ?? []).filter((p) => p.active).length} รายการที่เปิดขาย`}>
         <button className="btn btn-secondary" onClick={() => setCats(true)}>
           <FolderCog size={18} /> หมวดหมู่
+        </button>
+        <button className="btn btn-secondary" onClick={() => setImporting(true)}>
+          <FileUp size={18} /> นำเข้าหลายรายการ
         </button>
         <button className="btn btn-primary" onClick={() => setEditing('new')}>
           <Plus size={18} /> เพิ่มสินค้า
@@ -76,12 +82,17 @@ export function ProductsPage() {
               icon={<Package size={28} />}
               title="ยังไม่มีสินค้า"
               action={
-                <button className="btn btn-primary" onClick={() => setEditing('new')}>
-                  <Plus size={18} /> เพิ่มสินค้าแรก
-                </button>
+                <div className="row" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button className="btn btn-secondary" onClick={() => setImporting(true)}>
+                    <FileUp size={18} /> นำเข้าหลายรายการ
+                  </button>
+                  <button className="btn btn-primary" onClick={() => setEditing('new')}>
+                    <Plus size={18} /> เพิ่มสินค้าแรก
+                  </button>
+                </div>
               }
             >
-              เพิ่มสินค้าพร้อมรูป ราคา และต้นทุน แล้วสินค้าจะขึ้นที่หน้าขายทันที
+              เพิ่มทีละรายการ หรือวางรายชื่อสินค้าจาก Excel ทีเดียวหลายรายการ
             </Empty>
           ) : list.length === 0 ? (
             <Empty icon={<Package size={28} />} title="ไม่พบสินค้า">
@@ -113,7 +124,7 @@ export function ProductsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="r num t-strong">{baht(p.price)}</td>
+                      <td className="r num t-strong">{p.price === 0 && !p.active ? <span className="badge warning">ยังไม่มีราคา</span> : baht(p.price)}</td>
                       <td className="r num">{baht(p.cost)}</td>
                       <td className={`r num hide-narrow ${p.cost > p.price ? 'diff-neg' : ''}`}>{pct(margin)}</td>
                       <td className="r num">{p.trackStock ? (p.stock <= 0 ? <span className="badge danger">หมด</span> : p.stock <= p.lowStock ? <span className="badge warning">{p.stock}</span> : p.stock) : <span className="muted">ไม่นับ</span>}</td>
@@ -128,7 +139,128 @@ export function ProductsPage() {
       </div>
       {editing && <ProductEditor product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
       <CategoriesSheet open={cats} onClose={() => setCats(false)} />
+      <ImportSheet open={importing} onClose={() => setImporting(false)} />
     </div>
+  );
+}
+
+/* ---------------- import many ---------------- */
+
+const STATUS_LABEL: Record<ImportRow['status'], [string, string]> = {
+  new: ['เพิ่ม', 'success'],
+  exists: ['มีอยู่แล้ว ข้าม', ''],
+  error: ['แก้ก่อน', 'danger'],
+};
+
+function ImportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [text, setText] = useState('');
+  const [rows, setRows] = useState<ImportRow[]>([]);
+  const act = useAction();
+  const toast = useToast();
+  const [busy, run] = useBusy();
+  const file = useFilePicker(async (f) => setText(await f.text()), { accept: '.csv,.tsv,.txt,text/csv,text/plain' });
+
+  useEffect(() => {
+    if (!open) setText('');
+  }, [open]);
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(() => previewImport(text).then((r) => live && setRows(r)), 150);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [text]);
+
+  const add = rows.filter((r) => r.status === 'new');
+  const errors = rows.filter((r) => r.status === 'error');
+  const noPrice = add.filter((r) => r.price === null).length;
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      variant="side"
+      title="นำเข้าสินค้าหลายรายการ"
+      footer={
+        <>
+          <button className="btn btn-secondary btn-lg" onClick={onClose}>
+            ยกเลิก
+          </button>
+          <button
+            className="btn btn-primary btn-lg"
+            disabled={add.length === 0 || busy}
+            onClick={() =>
+              run(async () => {
+                const n = await act(() => importProducts(rows));
+                if (typeof n === 'number') {
+                  toast({ text: noPrice ? `เพิ่ม ${n} รายการแล้ว ใส่ราคาแล้วเปิดขายได้เลย` : `เพิ่ม ${n} รายการแล้ว`, tone: 'success' }, 5000);
+                  onClose();
+                }
+              })
+            }
+          >
+            {add.length ? `เพิ่ม ${add.length} รายการ` : 'เพิ่มสินค้า'}
+          </button>
+        </>
+      }
+    >
+      <p className="help" style={{ fontSize: 14, lineHeight: '20px' }}>
+        ก๊อปตารางจาก Excel, Numbers หรือ Google Sheets มาวางในช่องนี้ หรือเลือกไฟล์ CSV
+        <br />
+        เรียงคอลัมน์: <b>ชื่อสินค้า · หมวดหมู่ · ราคาขาย · ต้นทุน · สต็อก</b> มีแค่ชื่อก็ได้
+      </p>
+      <textarea
+        className="textarea"
+        style={{ minHeight: 160, fontSize: 15 }}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        aria-label="ตารางสินค้า"
+        placeholder={'น้ำเปล่า 550 ml\tเครื่องดื่ม\t10\t4\t48\nโค้ก Zero\tเครื่องดื่ม\t20\t12\t24'}
+        spellCheck={false}
+      />
+      <div className="row" style={{ flexWrap: 'wrap' }}>
+        <button className="btn btn-secondary btn-sm" onClick={file.open}>
+          <FileUp size={16} /> เลือกไฟล์ CSV
+        </button>
+        <button className="btn btn-ghost btn-sm" onClick={() => saveFile(toCsv([IMPORT_TEMPLATE_HEADER]), 'orbiz-pos-products-template.csv')}>
+          <Download size={16} /> แบบฟอร์มเปล่า
+        </button>
+        {text && (
+          <button className="btn btn-ghost btn-sm" onClick={() => setText('')}>
+            ล้าง
+          </button>
+        )}
+        {file.input}
+      </div>
+      {rows.length > 0 && (
+        <>
+          <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+            <span className="badge success num">เพิ่ม {add.length}</span>
+            {rows.length - add.length - errors.length > 0 && <span className="badge num">มีอยู่แล้ว {rows.length - add.length - errors.length}</span>}
+            {errors.length > 0 && <span className="badge danger num">ต้องแก้ {errors.length}</span>}
+          </div>
+          {noPrice > 0 && <div className="notice warning">{noPrice} รายการยังไม่มีราคา จะเพิ่มแบบปิดขายไว้ก่อน ใส่ราคาในหน้าสินค้าแล้วเปิดขาย</div>}
+          <div className="card">
+            {rows.map((r) => (
+              <div key={r.line} className="list-row" style={{ minHeight: 56, gap: 12 }}>
+                <div className="stack" style={{ flex: 1, minWidth: 0 }}>
+                  <span className="t-strong ellipsis">{r.name || `แถว ${r.line}`}</span>
+                  <span className={`t-sm ${r.status === 'error' ? 'error-text' : 'muted'} num`}>
+                    {r.status === 'error'
+                      ? `แถว ${r.line}: ${r.error}`
+                      : [r.category || 'ไม่มีหมวด', r.price !== null ? baht(r.price) : 'ยังไม่มีราคา', r.cost !== null ? `ทุน ${baht(r.cost)}` : '', r.stock !== null ? `สต็อก ${r.stock}` : '']
+                          .filter(Boolean)
+                          .join(' · ')}
+                  </span>
+                </div>
+                <span className={`badge ${STATUS_LABEL[r.status][1]}`}>{STATUS_LABEL[r.status][0]}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </Sheet>
   );
 }
 
