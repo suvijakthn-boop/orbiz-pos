@@ -1,0 +1,128 @@
+/* ORBIZ POS design tokens — 8 pt grid, two themes. */
+:root {
+  --carbon: #101113;
+  --ice: #a9ddf5;
+
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafb;
+  --surface-3: #f0f0f3;
+  --sunken: #ececf0;
+  --text: #101113;
+  --text-2: #5c5e64;
+  --text-3: #6f7178;
+  --border: #e5e5ea;
+  --border-strong: #d1d1d6;
+  --primary: #101113;
+  --on-primary: #ffffff;
+  --primary-pressed: #2a2b2f;
+  --accent: #a9ddf5;
+  --on-accent: #101113;
+  --accent-soft: #e6f5fc;
+  --accent-ink: #1b5f80;
+  --success: #1c7c4c;
+  --success-soft: #e4f4ea;
+  --warning: #8a5800;
+  --warning-soft: #fdf2d8;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --scrim: rgba(16, 17, 19, 0.42);
+  --shadow-1: 0 1px 2px rgba(16, 17, 19, 0.04), 0 1px 1px rgba(16, 17, 19, 0.03);
+  --shadow-2: 0 8px 24px rgba(16, 17, 19, 0.08), 0 2px 6px rgba(16, 17, 19, 0.04);
+  --shadow-3: 0 24px 64px rgba(16, 17, 19, 0.18), 0 4px 12px rgba(16, 17, 19, 0.06);
+  --focus: 0 0 0 3px var(--surface), 0 0 0 5px #4aa6d3;
+
+  --rail-bg: #101113;
+  --rail-text: #a1a3a9;
+  --rail-active: #ffffff;
+
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+  --s10: 40px;
+  --s12: 48px;
+
+  --tap: 44px;
+  --tap-lg: 56px;
+
+  --font: 'Inter', 'Noto Sans Thai', -apple-system, system-ui, sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur: 180ms;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b0b0c;
+    --surface: #161719;
+    --surface-2: #1b1c1f;
+    --surface-3: #222327;
+    --sunken: #0f1011;
+    --text: #f5f5f7;
+    --text-2: #a8aab0;
+    --text-3: #93959c;
+    --border: #2a2b30;
+    --border-strong: #3a3b41;
+    --primary: #f5f5f7;
+    --on-primary: #101113;
+    --primary-pressed: #d9d9de;
+    --accent-soft: #173040;
+    --accent-ink: #a9ddf5;
+    --success: #5fd197;
+    --success-soft: #12301f;
+    --warning: #f2c46b;
+    --warning-soft: #33280f;
+    --danger: #ff8a80;
+    --danger-soft: #3a1714;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.6);
+    --focus: 0 0 0 3px var(--bg), 0 0 0 5px var(--ice);
+    --rail-bg: #000000;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0b0b0c;
+  --surface: #161719;
+  --surface-2: #1b1c1f;
+  --surface-3: #222327;
+  --sunken: #0f1011;
+  --text: #f5f5f7;
+  --text-2: #a8aab0;
+  --text-3: #93959c;
+  --border: #2a2b30;
+  --border-strong: #3a3b41;
+  --primary: #f5f5f7;
+  --on-primary: #101113;
+  --primary-pressed: #d9d9de;
+  --accent-soft: #173040;
+  --accent-ink: #a9ddf5;
+  --success: #5fd197;
+  --success-soft: #12301f;
+  --warning: #f2c46b;
+  --warning-soft: #33280f;
+  --danger: #ff8a80;
+  --danger-soft: #3a1714;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.6);
+  --focus: 0 0 0 3px var(--bg), 0 0 0 5px var(--ice);
+  --rail-bg: #000000;
+  color-scheme: dark;
+}
