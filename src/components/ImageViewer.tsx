@@ -39,10 +39,17 @@ export function ImageViewer({
 
   useEffect(() => setView({ scale: 1, x: 0, y: 0 }), [imageId, directUrl]);
 
+  // Focus the close button once when the viewer opens, not on every render:
+  // re-focusing each render pulled focus out of the note field while typing.
   useEffect(() => {
     closeRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName ?? '');
       if (e.key === 'Escape') onClose();
+      if (typing) return;
       if (e.key === 'ArrowLeft') onPrev?.();
       if (e.key === 'ArrowRight') onNext?.();
       if (e.key === '+' || e.key === '=') zoomBy(1.5);

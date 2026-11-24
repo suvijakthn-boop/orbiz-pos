@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Boxes, PackagePlus, SlidersHorizontal, X } from 'lucide-react';
+import { Boxes, PackagePlus, ReceiptText, SlidersHorizontal, X } from 'lucide-react';
 import { db, type Product, type StockReason } from '../../lib/db';
 import { baht, fmtDateTime, num, parseBaht, bahtInput } from '../../lib/format';
 import { adjustStock, isLowStock, receiveStock } from '../../lib/inventory';
@@ -9,6 +9,7 @@ import { useAction } from '../../state/app';
 import { Empty, SearchField, Seg, Thumb, useBusy } from '../../components/ui';
 import { PageHead } from './BackOffice';
 import { PinConfirm } from './Lock';
+import { ReceiveBillSheet } from './ReceiveBill';
 
 type Filter = 'all' | 'low' | 'out';
 
@@ -25,6 +26,7 @@ export function InventoryPage({ initial }: { initial?: string }) {
   const products = useLiveQuery(() => db.products.orderBy('sort').toArray(), []);
   const [filter, setFilter] = useState<Filter>(initial === 'low' ? 'low' : 'all');
   const [q, setQ] = useState('');
+  const [bill, setBill] = useState(false);
   const [selected, setSelected] = useState<string | null>(initial && initial !== 'low' ? initial : null);
 
   const tracked = useMemo(() => (products ?? []).filter((p) => p.trackStock && p.active), [products]);
@@ -39,7 +41,11 @@ export function InventoryPage({ initial }: { initial?: string }) {
   return (
     <div className="split">
       <div className="page">
-        <PageHead title="สต็อก" sub={`มูลค่าตามทุน ${baht(inventoryValue(products ?? []))} · ${num(tracked.reduce((a, p) => a + Math.max(0, p.stock), 0))} ชิ้น`} />
+        <PageHead title="สต็อก" sub={`มูลค่าตามทุน ${baht(inventoryValue(products ?? []))} · ${num(tracked.reduce((a, p) => a + Math.max(0, p.stock), 0))} ชิ้น`}>
+          <button className="btn btn-primary" onClick={() => setBill(true)}>
+            <ReceiptText size={18} /> รับของจากบิล
+          </button>
+        </PageHead>
         <div className="page-body">
           <div className="toolbar">
             <SearchField value={q} onChange={setQ} placeholder="ค้นหาสินค้า" label="ค้นหาสินค้าในสต็อก" />
@@ -92,6 +98,7 @@ export function InventoryPage({ initial }: { initial?: string }) {
         </div>
       </div>
       {sel && <StockPanel p={sel} onClose={() => setSelected(null)} />}
+      <ReceiveBillSheet open={bill} onClose={() => setBill(false)} />
     </div>
   );
 }

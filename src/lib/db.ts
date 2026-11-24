@@ -141,6 +141,28 @@ export interface LogEntry {
   demo?: boolean;
 }
 
+export interface ReceiptLine {
+  productId: string;
+  name: string;
+  qty: number;
+  cost: Satang;
+  previousCost: Satang;
+  created: boolean;
+}
+
+/** Stock received from supplier bills, entered from the weekly text summary. */
+export interface Receipt {
+  id: string;
+  at: number;
+  week: string;
+  bills: string;
+  total: Satang;
+  lines: ReceiptLine[];
+  /** Fingerprint of the pasted text, so the same summary can't be added twice. */
+  hash: string;
+  demo?: boolean;
+}
+
 export interface Setting {
   key: string;
   value: unknown;
@@ -157,6 +179,7 @@ export class PosDB extends Dexie {
   counts!: Table<StockCount, string>;
   log!: Table<LogEntry, string>;
   settings!: Table<Setting, string>;
+  receipts!: Table<Receipt, string>;
 
   constructor(name = 'orbiz-pos') {
     super(name);
@@ -172,6 +195,7 @@ export class PosDB extends Dexie {
       log: 'id, at, area',
       settings: 'key',
     });
+    this.version(2).stores({ receipts: 'id, at, hash' });
   }
 }
 
@@ -193,6 +217,7 @@ export const ALL_TABLES = [
   'counts',
   'log',
   'settings',
+  'receipts',
 ] as const;
 
 export type TableName = (typeof ALL_TABLES)[number];

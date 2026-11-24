@@ -25,15 +25,22 @@ export function Sheet({
 }) {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
+  // Keep the latest onClose without re-running the focus effect. Parents pass a new
+  // function on every render; re-running the effect on each keystroke moved focus away
+  // from the text box and closed the iPad keyboard after every character.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     const t = setTimeout(() => {
+      // Someone already tapped into a field in the sheet: leave their focus alone.
+      if (ref.current?.contains(document.activeElement)) return;
       const el = ref.current?.querySelector<HTMLElement>('[data-autofocus]') ?? ref.current;
       el?.focus({ preventScroll: true });
     }, 30);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => {
@@ -41,7 +48,7 @@ export function Sheet({
       window.removeEventListener('keydown', onKey);
       prev?.focus?.({ preventScroll: true });
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return (
     <>

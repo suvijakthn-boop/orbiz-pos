@@ -23,7 +23,7 @@ export function PinPad({ onComplete, disabled, error, resetKey }: { onComplete: 
   };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName ?? '')) return;
       if (/^\d$/.test(e.key)) push(e.key);
       if (e.key === 'Backspace') setPin((p) => p.slice(0, -1));
     };
